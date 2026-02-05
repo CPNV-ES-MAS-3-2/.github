@@ -1,0 +1,129 @@
+//cloud-architecture-diagram
+direction right
+
+// resources
+cloud{
+  vpc{
+    iaas{
+      dmz {
+        nat[icon: aws-nat-gateway]
+        reverse-proxy-srv[icon: nginx]
+        ssh-srv[icon:aws-vpn-connection]
+      }
+
+      backend{
+        container-orchestrator[icon:kubernetes]
+        etl-pod{
+          api-gateway[icon: microservices]
+          orchestrator[icon: microservices]
+          extract[icon: microservices]
+          transform[icon: microservices]
+          load[icon: microservices]
+        }
+        datawarehouse{
+          datamart01[icon: mysql]
+          datamart02[icon: mariadb]
+          datamart03[icon: mongodb]
+        }
+        monitoring{
+          mon-dashboard[icon: gcp-performance-dashboard]
+          mon-backend[icon: microservices]
+          mon-database[icon: database]
+        }
+      }
+    }
+
+    saas{
+      bi{
+        bi-dashboard[icon: aws-quicksight]
+        bi-datawarehouse[icon: aws-redshift]
+      }
+      iaas-monitoring[icon: aws-cloudwatch]
+      dns[icon: aws-route-53]
+      storage[icon: aws-s3]
+      frontend{
+        fe-webdeploy[icon: aws-amplify]
+        fe-https[icon: aws-cloudfront]
+      }
+    }
+  }
+
+  external-cloud-storage{
+    buckets[icon: gcp-cloud-storage]
+  }
+
+  external-cicd-pipeline{
+    continous-delivery[icon:github]
+    continous-deployment[icon: docker]
+  }
+}
+
+// actors
+human-actors{
+  end-user{
+    // --end-users
+    bi-mobile-end-user[icon:user]
+    bi-api-end-user[icon:code]
+    // --business
+    bi-dashboard-administrator [icon: user]
+    monitoring-admin[icon: user]
+  }
+    // --devops
+    dev{
+      devops-developer[icon: code]
+    }
+    ops{
+      devops-deploy-admin[icon: terraform]
+      sys-admin[icon: client]
+    }
+}
+
+
+// --devops
+
+// access to the solution
+bi-end-user-access[icon: cloud]
+saas-admin-access[icon: cloud]
+inter-provider-access[icon: cloud]
+cicd-pipeline-access[icon: cloud]
+
+// network
+// --end-user
+bi-mobile-end-user - bi-end-user-access
+bi-api-end-user - bi-end-user-access
+bi-end-user-access - reverse-proxy-srv
+
+bi-dashboard-administrator - saas-admin-access
+saas-admin-access - saas
+
+// --front-user
+bi-mobile-end-user - frontend
+frontend - storage
+fe-webdeploy - bi-dashboard
+
+// --devops teams
+devops-deploy-admin - saas-admin-access
+devops-developer - cicd-pipeline-access
+sys-admin - ssh-srv
+monitoring-admin - reverse-proxy-srv
+
+// --reverse proxy
+reverse-proxy-srv - container-orchestrator
+
+// --etl-pod
+container-orchestrator - api-gateway
+api-gateway - orchestrator
+orchestrator - extract
+orchestrator - transform
+orchestrator - load
+load - datawarehouse
+etl-pod - inter-provider-access
+inter-provider-access - external-cloud-storage
+etl-pod - cicd-pipeline-access
+cicd-pipeline-access - external-cicd-pipeline
+
+//monitoring
+monitoring - container-orchestrator
+mon-dashboard - reverse-proxy-srv
+mon-dashboard - mon-backend
+mon-backend - mon-database
